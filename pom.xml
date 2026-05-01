@@ -1,0 +1,44 @@
+<project xmlns="http://maven.apache.org/POM/4.1.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.1.0 http://maven.apache.org/xsd/maven-4.1.0.xsd" root="true">
+  <modelVersion>4.1.0</modelVersion>
+
+  <groupId>com.github.pakisan.jarazzo</groupId>
+  <artifactId>jarazzo</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+
+  <!-- Project Information -->
+  <name>Arazzo</name>
+  <inceptionYear>2026</inceptionYear>
+  <url>https://github.com/Pakisan/jarazzo</url>
+  <description>
+    /jay-arazzo/ is a Java code-first tool for Arazzo specification
+  </description>
+  <developers>
+    <developer>
+      <name>Pavel Bodiachevskii</name>
+      <url>https://github.com/Pakisan</url>
+    </developer>
+  </developers>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  <scm>
+    <url>https://github.com/Pakisan/jarazzo</url>
+    <connection>scm:git:https://github.com/Pakisan/jarazzo.git</connection>
+    <tag>HEAD</tag>
+  </scm>
+
+  <!-- Packaging Information -->
+  <packaging>pom</packaging>
+
+  <subprojects>
+    <subproject>jarazzo-models</subproject>
+  </subprojects>
+
+</project>
