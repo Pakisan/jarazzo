@@ -15,6 +15,32 @@ import org.jspecify.annotations.Nullable;
  * {@link SuccessAction#getCriteria()}, and Failure Action Object criteria
  * <br><br>
  * This object <b>MAY</b> be extended with <a href="https://spec.openapis.org/arazzo/latest.html#specification-extensions">Specification Extensions</a>
+ * <br><br>
+ * As part of a condition expression, you can use <code>boolean</code>, <code>null</code>, <code>number</code>, or <code>string</code> data types:
+ * <ul>
+ *   <li><code>boolean</code> - <code>true</code> or <code>false</code></li>
+ *   <li><code>null</code> - <code>null</code></li>
+ *   <li><code>number</code> - Any <code>number</code> number format supported in <a href="https://spec.openapis.org/arazzo/latest.html#data-types">Data Types</a></li>
+ *   <li><code>string</code> - Strings <b>MUST</b> use single quotes (<code>‘</code>) around the string. To use a literal single quote, escape the literal single quote using an additional single quote (<code>’'</code>)</li>
+ * </ul>
+ * <br><br>
+ * As part of a condition expression, you can use operations:
+ * <ul>
+ *   <li><code><</code>	Less than</li>
+ *   <li><code><=</code>	Less than or equal</li>
+ *   <li><code>></code>	Greater than</li>
+ *   <li><code>>=</code>	Greater than or equal</li>
+ *   <li><code>==</code>	Equal</li>
+ *   <li><code>!=</code>	Not equal</li>
+ *   <li><code>!</code>	Not</li>
+ *   <li><code>&&</code>	And</li>
+ *   <li><code>||</code>	Or</li>
+ *   <li><code>()</code>	Logical Grouping</li>
+ *   <li><code>[]</code>	Index (0-based)</li>
+ *   <li><code>.</code>	Property de-reference</li>
+ * </ul>
+ * <br>
+ * String comparisons <b>MUST</b> be case insensitive
  *
  * @author Pavel Bodiachevskiy <pavelbodyachevskiy@gmail.com>
  * @version 1.0.1
