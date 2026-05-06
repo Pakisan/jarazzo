@@ -2,7 +2,9 @@ package com.github.pakisan.jarazzo.models.v1._0_1.actions.conditions;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.github.pakisan.jarazzo.core.ExtendableObject;
+import com.github.pakisan.jarazzo.core.jackson.CriterionTypeDeserializer;
 import com.github.pakisan.jarazzo.models.v1._0_1.actions.SuccessAction;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -100,6 +102,7 @@ public class Criterion extends ExtendableObject {
   @Builder.Default
   @JsonProperty(value = "type")
   @JsonPropertyDescription("The type of condition to be applied")
+  @JsonDeserialize(using = CriterionTypeDeserializer.class)
   private Object type = CriterionType.SIMPLE;
 
 }
