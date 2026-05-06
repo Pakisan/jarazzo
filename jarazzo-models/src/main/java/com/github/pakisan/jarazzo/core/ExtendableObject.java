@@ -1,4 +1,4 @@
-package com.github.pakisan.jarazzo.models;
+package com.github.pakisan.jarazzo.core;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;

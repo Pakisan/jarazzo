@@ -2,7 +2,7 @@ package com.github.pakisan.jarazzo.models.v1._0_1;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.github.pakisan.jarazzo.models.ExtendableObject;
+import com.github.pakisan.jarazzo.core.ExtendableObject;
 import com.github.pakisan.jarazzo.models.v1._0_1.components.Components;
 import com.github.pakisan.jarazzo.models.v1._0_1.info.Info;
 import com.github.pakisan.jarazzo.models.v1._0_1.sources.SourceDescription;
