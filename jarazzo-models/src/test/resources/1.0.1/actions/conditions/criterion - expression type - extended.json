@@ -1,0 +1,10 @@
+{
+  "context" : "$response.body",
+  "condition" : "$[?count(@.pets) > 0]",
+  "type" : {
+    "type" : "jsonpath",
+    "version" : "draft-goessner-dispatch-jsonpath-00"
+  },
+  "x-number" : 0,
+  "x-string" : "this is a string"
+}

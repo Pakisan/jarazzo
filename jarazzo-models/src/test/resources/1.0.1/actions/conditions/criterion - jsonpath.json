@@ -1,0 +1,5 @@
+{
+  "context" : "$response.body",
+  "condition" : "$[?count(@.pets) > 0]",
+  "type" : "jsonpath"
+}

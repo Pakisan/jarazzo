@@ -1,0 +1,6 @@
+{
+  "context" : "$response.body",
+  "condition" : "$[?count(@.pets) > 0]",
+  "type" : "simple",
+  "ext-number" : 0
+}
