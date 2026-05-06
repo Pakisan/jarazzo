@@ -1,0 +1,12 @@
+{
+  "name" : "JoinWaitingList",
+  "type" : "end",
+  "workflowId" : "waitingListWorkflow",
+  "criteria" : [ {
+    "context" : "$response.body",
+    "condition" : "$[?count(@.pets) > 0]",
+    "type" : "jsonpath"
+  } ],
+  "x-number" : 0,
+  "x-string" : "this is a string"
+}

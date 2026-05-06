@@ -1,0 +1,10 @@
+{
+  "name" : "JoinWaitingList",
+  "type" : "goto",
+  "stepId" : "joinWaitingListStep",
+  "criteria" : [ {
+    "context" : "$response.body",
+    "condition" : "$[?count(@.pets) > 0]",
+    "type" : "jsonpath"
+  } ]
+}
