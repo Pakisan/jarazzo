@@ -1,0 +1,824 @@
+arazzo: 1.0.1
+info:
+  title: Jentic Generated Arazzo Specification
+  version: 1.0.0
+  description: Automatically generated Arazzo specification from OpenAPI
+sourceDescriptions:
+  - name: openapi_source
+    url: ./apis/openapi/apacta.com/main/0.0.42/openapi.json
+    type: openapi
+workflows:
+  - workflowId: invoice-generation-from-project-data
+    summary: Automates the process of creating an invoice for a project, including
+      adding line items and linking a project overview PDF. This streamlines the
+      billing cycle for completed project work.
+    description: Automates the process of creating an invoice for a project,
+      including adding line items and linking a project overview PDF. This
+      streamlines the billing cycle for completed project work.
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+        date_from:
+          type: string
+        date_to:
+          type: string
+        erp_id:
+          type: string
+        erp_payment_term_id:
+          type: string
+        invoice_number:
+          type: string
+        is_draft:
+          type: string
+        is_locked:
+          type: string
+        is_offer:
+          type: string
+        issued_date:
+          type: string
+        message:
+          type: string
+        offer_number:
+          type: string
+        payment_due_date:
+          type: string
+        payment_term_id:
+          type: string
+        reference:
+          type: string
+        vat_percent:
+          type: string
+        description:
+          type: string
+        discount_percent:
+          type: string
+        discount_text:
+          type: string
+        name:
+          type: string
+        product_bundle_id:
+          type: string
+        product_id:
+          type: string
+        quantity:
+          type: string
+        selling_price:
+          type: string
+        user_id:
+          type: string
+        invoice_id:
+          type: string
+    steps:
+      - stepId: get-project-for-invoice
+        description: Retrieves the project details necessary for creating an invoice,
+          such as contact information and project ID.
+        operationPath: openapi_source#/paths/~1projects~1{project_id}/get
+        parameters:
+          - name: project_id
+            in: path
+            value: $inputs.project_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: create-invoice
+        description: Creates a new invoice for the specified project and contact,
+          setting initial billing parameters.
+        operationPath: openapi_source#/paths/~1invoices/post
+        requestBody:
+          contentType: application/json
+          payload:
+            project_id: $steps.get-project-for-invoice.outputs.data.id
+            contact_id: $steps.get-project-for-invoice.outputs.data.contact_id
+            date_from: $inputs.date_from
+            date_to: $inputs.date_to
+            erp_id: $inputs.erp_id
+            erp_payment_term_id: $inputs.erp_payment_term_id
+            invoice_number: $inputs.invoice_number
+            is_draft: $inputs.is_draft
+            is_locked: $inputs.is_locked
+            is_offer: $inputs.is_offer
+            issued_date: $inputs.issued_date
+            message: $inputs.message
+            offer_number: $inputs.offer_number
+            payment_due_date: $inputs.payment_due_date
+            payment_term_id: $inputs.payment_term_id
+            reference: $inputs.reference
+            vat_percent: $inputs.vat_percent
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: add-invoice-line
+        description: Adds a line item (e.g., for products or services) to the newly
+          created invoice, detailing the charges.
+        operationPath: openapi_source#/paths/~1invoice_lines/post
+        requestBody:
+          contentType: application/json
+          payload:
+            invoice_id: $steps.create-invoice.outputs.id
+            description: $inputs.description
+            discount_percent: $inputs.discount_percent
+            discount_text: $inputs.discount_text
+            name: $inputs.name
+            product_bundle_id: $inputs.product_bundle_id
+            product_id: $inputs.product_id
+            quantity: $inputs.quantity
+            selling_price: $inputs.selling_price
+            user_id: $inputs.user_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: link-project-pdf-to-invoice
+        description: Attaches the project's overview PDF to the invoice, providing a
+          comprehensive document for the client.
+        operationPath: openapi_source#/paths/~1invoices~1{invoice_id}~1linkProjectPdf/post
+        parameters:
+          - name: invoice_id
+            in: path
+            value: $steps.create-invoice.outputs.id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          success: $response.body#/success
+      - stepId: get-invoice-details
+        description: Retrieves the full details of the generated invoice, including
+          linked files and line items, for verification or display.
+        operationPath: openapi_source#/paths/~1invoices~1{invoice_id}/get
+        parameters:
+          - name: invoice_id
+            in: path
+            value: $steps.create-invoice.outputs.id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+    outputs:
+      data: $steps.get-invoice-details.outputs.data
+      id: $steps.add-invoice-line.outputs.id
+      success: $steps.link-project-pdf-to-invoice.outputs.success
+    failureActions:
+      - reference: $components.failureActions.auth_failure
+      - reference: $components.failureActions.permission_denied
+      - reference: $components.failureActions.not_found
+      - reference: $components.failureActions.server_error
+  - workflowId: project-setup-and-team-assignment
+    summary: Create a new project and assign existing users from the company to it,
+      enabling collaboration and work logging. This workflow is crucial for
+      initiating new client engagements and allocating resources.
+    description: Create a new project and assign existing users from the company to
+      it, enabling collaboration and work logging. This workflow is crucial for
+      initiating new client engagements and allocating resources.
+    inputs:
+      type: object
+      properties:
+        name:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        email:
+          type: string
+        stock_location_id:
+          type: string
+        is_active:
+          type: string
+        project_id:
+          type: string
+    steps:
+      - stepId: create-project
+        description: Creates a new project in the system with essential details like
+          name, contact, and status.
+        operationPath: openapi_source#/paths/~1projects/post
+        requestBody:
+          contentType: application/json
+          payload:
+            name: $inputs.name
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: list-users
+        description: Retrieves a list of all active users in the company, allowing
+          selection of team members for the project.
+        operationPath: openapi_source#/paths/~1users/get
+        parameters:
+          - name: first_name
+            in: query
+            value: $inputs.first_name
+          - name: last_name
+            in: query
+            value: $inputs.last_name
+          - name: email
+            in: query
+            value: $inputs.email
+          - name: stock_location_id
+            in: query
+            value: $inputs.stock_location_id
+          - name: is_active
+            in: query
+            value: $inputs.is_active
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: add-user-to-project
+        description: Assigns a selected user to the newly created project, granting them
+          access and enabling time/material logging.
+        operationPath: openapi_source#/paths/~1projects~1{project_id}~1users~1/post
+        parameters:
+          - name: project_id
+            in: path
+            value: $steps.create-project.outputs.id
+        requestBody:
+          contentType: application/json
+          payload:
+            project_id: $steps.create-project.outputs.id
+            user_id: $steps.list-users.outputs.data[0].id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+    outputs:
+      id: $steps.add-user-to-project.outputs.id
+      data: $steps.list-users.outputs.data
+    failureActions:
+      - reference: $components.failureActions.auth_failure
+      - reference: $components.failureActions.permission_denied
+      - reference: $components.failureActions.not_found
+      - reference: $components.failureActions.server_error
+  - workflowId: daily-work-registration-time--materials
+    summary: Allows craftsmen to log their working hours, material usage, and other
+      expenses for a specific project. This is a core function for tracking
+      project costs and progress.
+    description: Allows craftsmen to log their working hours, material usage, and
+      other expenses for a specific project. This is a core function for
+      tracking project costs and progress.
+    inputs:
+      type: object
+      properties:
+        project_id:
+          type: string
+        name:
+          type: string
+        identifier:
+          type: string
+        pdf_template_identifier:
+          type: string
+        description:
+          type: string
+        barcode:
+          type: string
+        currently_rented:
+          type: string
+        material_id:
+          type: string
+        from_date:
+          type: string
+        is_invoiced:
+          type: string
+        quantity:
+          type: string
+        to_date:
+          type: string
+        contact_id:
+          type: string
+        currency_id:
+          type: string
+        delivery_date:
+          type: string
+        reference:
+          type: string
+        short_text:
+          type: string
+        supplier_invoice_number:
+          type: string
+        buying_price:
+          type: string
+        selling_price:
+          type: string
+        text:
+          type: string
+    steps:
+      - stepId: get-project-details
+        description: Retrieves details of the project for which work is being
+          registered, ensuring accurate context for logging.
+        operationPath: openapi_source#/paths/~1projects~1{project_id}/get
+        parameters:
+          - name: project_id
+            in: path
+            value: $inputs.project_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: list-form-templates
+        description: Lists available form templates to select the appropriate one for
+          daily work (e.g., 'dagseddel' for time sheets or 'qa' for quality
+          assurance).
+        operationPath: openapi_source#/paths/~1form_templates/get
+        parameters:
+          - name: name
+            in: query
+            value: $inputs.name
+          - name: identifier
+            in: query
+            value: $inputs.identifier
+          - name: pdf_template_identifier
+            in: query
+            value: $inputs.pdf_template_identifier
+          - name: description
+            in: query
+            value: $inputs.description
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: create-daily-work-form
+        description: Creates a new form instance for daily work registration, linking it
+          to the project and selected template.
+        operationPath: openapi_source#/paths/~1forms/post
+        requestBody:
+          contentType: application/json
+          payload:
+            project_id: $steps.get-project-details.outputs.data.id
+            form_template_id: $steps.list-form-templates.outputs.data[0].id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: add-time-entry
+        description: Records working hours for a user on the project, linked to the
+          daily work form, capturing billable time.
+        operationPath: openapi_source#/paths/~1time_entries/post
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: list-materials
+        description: Retrieves a list of available materials to select for usage on the
+          project.
+        operationPath: openapi_source#/paths/~1materials/get
+        parameters:
+          - name: barcode
+            in: query
+            value: $inputs.barcode
+          - name: name
+            in: query
+            value: $inputs.name
+          - name: project_id
+            in: query
+            value: $steps.get-project-details.outputs.data.id
+          - name: currently_rented
+            in: query
+            value: $inputs.currently_rented
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: add-material-rental
+        description: Records the usage or rental of a specific material on the project,
+          linked to the daily work form.
+        operationPath: openapi_source#/paths/~1materials~1{material_id}~1rentals~1/post
+        parameters:
+          - name: material_id
+            in: path
+            value: $steps.list-materials.outputs.data.id
+        requestBody:
+          contentType: application/json
+          payload:
+            material_id: $steps.list-materials.outputs.data[0].id
+            project_id: $steps.get-project-details.outputs.data.id
+            form_id: $steps.create-daily-work-form.outputs.id
+            from_date: $inputs.from_date
+            is_invoiced: $inputs.is_invoiced
+            quantity: $inputs.quantity
+            to_date: $inputs.to_date
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: create-expense
+        description: Creates a new expense record for the project, capturing additional
+          costs incurred.
+        operationPath: openapi_source#/paths/~1expenses/post
+        requestBody:
+          contentType: application/json
+          payload:
+            project_id: $steps.get-project-details.outputs.data.id
+            contact_id: $inputs.contact_id
+            currency_id: $inputs.currency_id
+            delivery_date: $inputs.delivery_date
+            description: $inputs.description
+            reference: $inputs.reference
+            short_text: $inputs.short_text
+            supplier_invoice_number: $inputs.supplier_invoice_number
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: add-expense-line
+        description: Adds a detailed line item to the created expense, specifying the
+          cost and quantity.
+        operationPath: openapi_source#/paths/~1expense_lines/post
+        requestBody:
+          contentType: application/json
+          payload:
+            expense_id: $steps.create-expense.outputs.id
+            buying_price: $inputs.buying_price
+            currency_id: $inputs.currency_id
+            quantity: $inputs.quantity
+            selling_price: $inputs.selling_price
+            text: $inputs.text
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: checkout-material-rental
+        description: Checks out a previously rented material, marking its return and
+          finalizing its rental period.
+        operationPath: openapi_source#/paths/~1materials~1{material_id}~1rentals~1checkout~1/post
+        parameters:
+          - name: material_id
+            in: path
+            value: $steps.list-materials.outputs.data.id
+        requestBody:
+          contentType: application/json
+          payload:
+            material_id: $steps.list-materials.outputs.data[0].id
+            material_rental_id: $steps.add-material-rental.outputs.id
+            form_id: $steps.create-daily-work-form.outputs.id
+            to_date: $inputs.to_date
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+    outputs:
+      data: $steps.list-materials.outputs.data
+      id: $steps.checkout-material-rental.outputs.id
+    failureActions:
+      - reference: $components.failureActions.auth_failure
+      - reference: $components.failureActions.permission_denied
+      - reference: $components.failureActions.not_found
+      - reference: $components.failureActions.server_error
+  - workflowId: employee-time-tracking-and-availability-check
+    summary: Manages an employee's clock-in/out records and allows checking their
+      availability for new tasks. This supports workforce management and
+      scheduling.
+    description: Manages an employee's clock-in/out records and allows checking
+      their availability for new tasks. This supports workforce management and
+      scheduling.
+    inputs:
+      type: object
+      properties:
+        checkin_latitude:
+          type: string
+        checkin_longitude:
+          type: string
+        checkout_latitude:
+          type: string
+        checkout_longitude:
+          type: string
+        project_id:
+          type: string
+        date_from:
+          type: string
+        date_to:
+          type: string
+        user_id:
+          type: string
+        start:
+          type: string
+        end:
+          type: string
+    steps:
+      - stepId: create-clocking-record
+        description: Records an employee's clock-in time, optionally linked to a project
+          and geographical coordinates.
+        operationPath: openapi_source#/paths/~1clocking_records/post
+        requestBody:
+          contentType: application/json
+          payload:
+            checkin_latitude: $inputs.checkin_latitude
+            checkin_longitude: $inputs.checkin_longitude
+            checkout_latitude: $inputs.checkout_latitude
+            checkout_longitude: $inputs.checkout_longitude
+            project_id: $inputs.project_id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: get-employee-hours
+        description: Retrieves a summary of the logged-in user's working hours for a
+          specified date range, useful for payroll or performance review.
+        operationPath: openapi_source#/paths/~1employee_hours/get
+        parameters:
+          - name: date_from
+            in: query
+            value: $inputs.date_from
+          - name: date_to
+            in: query
+            value: $inputs.date_to
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: check-user-availability
+        description: Checks if a specific user is available within a given datetime
+          range, crucial for scheduling new events or tasks.
+        operationPath: openapi_source#/paths/~1events~1is_user_free/get
+        parameters:
+          - name: user_id
+            in: query
+            value: $inputs.user_id
+          - name: start
+            in: query
+            value: $inputs.start
+          - name: end
+            in: query
+            value: $inputs.end
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          result: $response.body#/result
+      - stepId: checkout-clocking-record
+        description: Records an employee's clock-out time for their active clocking
+          record, completing a work shift.
+        operationPath: openapi_source#/paths/~1clocking_records~1checkout/post
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          success: $response.body#/success
+    outputs:
+      id: $steps.create-clocking-record.outputs.id
+      data: $steps.get-employee-hours.outputs.data
+      result: $steps.check-user-availability.outputs.result
+      success: $steps.checkout-clocking-record.outputs.success
+    failureActions:
+      - reference: $components.failureActions.auth_failure
+      - reference: $components.failureActions.permission_denied
+      - reference: $components.failureActions.not_found
+      - reference: $components.failureActions.server_error
+  - workflowId: vendor-and-product-price-file-management
+    summary: Manages vendor relationships, including adding new vendors and
+      uploading/accessing their product price files for internal use. This
+      streamlines procurement and ensures up-to-date pricing.
+    description: Manages vendor relationships, including adding new vendors and
+      uploading/accessing their product price files for internal use. This
+      streamlines procurement and ensures up-to-date pricing.
+    inputs:
+      type: object
+      properties:
+        with_custom:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        cvr:
+          type: string
+        file_name:
+          type: string
+        vendor_name:
+          type: string
+        vendor_ids:
+          type: string
+        status:
+          type: string
+    steps:
+      - stepId: list-vendors
+        description: Retrieves a list of all registered vendors, allowing identification
+          of existing suppliers.
+        operationId: getVendorsList
+        parameters:
+          - name: with_custom
+            in: query
+            value: $inputs.with_custom
+          - name: email
+            in: query
+            value: $inputs.email
+          - name: name
+            in: query
+            value: $inputs.name
+          - name: cvr
+            in: query
+            value: $inputs.cvr
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: add-new-vendor
+        description: Adds a new vendor to the system, expanding the supplier network.
+        operationId: addVendor
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: add-company-vendor
+        description: Establishes a company-specific relationship with a vendor,
+          including pricing and delivery details relevant to the company.
+        operationId: addCompaniesVendor
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: upload-vendor-price-file
+        description: Uploads a new product price file received from a specific company
+          vendor, updating product costs.
+        operationPath: openapi_source#/paths/~1vendor_product_price_files/post
+        requestBody:
+          contentType: application/x-www-form-urlencoded
+          payload:
+            companies_vendor_id: $steps.add-company-vendor.outputs.id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          success: $response.body#/success
+      - stepId: get-vendor-price-files
+        description: Retrieves a list of all uploaded vendor product price files,
+          allowing review of available pricing data.
+        operationPath: openapi_source#/paths/~1vendor_product_price_files/get
+        parameters:
+          - name: file_name
+            in: query
+            value: $inputs.file_name
+          - name: vendor_name
+            in: query
+            value: $inputs.vendor_name
+          - name: vendor_ids
+            in: query
+            value: $steps.add-new-vendor.outputs.id
+          - name: status
+            in: query
+            value: $inputs.status
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: get-single-price-file-details
+        description: Retrieves detailed information about a specific price file,
+          including its download link for further processing.
+        operationPath: openapi_source#/paths/~1vendor_product_price_files~1{vendor_product_price_file_id}/get
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+    outputs:
+      data: $steps.get-single-price-file-details.outputs.data
+      id: $steps.add-company-vendor.outputs.id
+      success: $steps.upload-vendor-price-file.outputs.success
+    failureActions:
+      - reference: $components.failureActions.auth_failure
+      - reference: $components.failureActions.permission_denied
+      - reference: $components.failureActions.not_found
+      - reference: $components.failureActions.server_error
+  - workflowId: contact-and-contact-person-management
+    summary: Manages business contacts (clients, partners, suppliers) and their
+      associated individual contact persons. This workflow supports CRM
+      functionalities and organized communication.
+    description: Manages business contacts (clients, partners, suppliers) and their
+      associated individual contact persons. This workflow supports CRM
+      functionalities and organized communication.
+    inputs:
+      type: object
+      properties:
+        identifier:
+          type: string
+        contact_id:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        title:
+          type: string
+        q:
+          type: string
+        created_gte:
+          type: string
+        created_lte:
+          type: string
+    steps:
+      - stepId: list-contact-types
+        description: Retrieves a list of predefined contact types (e.g., client,
+          partner, supplier) to categorize new contacts accurately.
+        operationPath: openapi_source#/paths/~1contact_types/get
+        parameters:
+          - name: identifier
+            in: query
+            value: $inputs.identifier
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: add-new-contact
+        description: Creates a new business contact with relevant details such as
+          address, email, and assigned contact types.
+        operationPath: openapi_source#/paths/~1contacts/post
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: get-contact-details
+        description: Retrieves the full details of a specific contact, including all
+          associated information.
+        operationPath: openapi_source#/paths/~1contacts~1{contact_id}/get
+        parameters:
+          - name: contact_id
+            in: path
+            value: $steps.add-new-contact.outputs.id
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+      - stepId: add-contact-person
+        description: Adds an individual contact person (e.g., a specific employee) to an
+          existing business contact.
+        operationId: addContactPerson
+        parameters:
+          - name: contact_id
+            in: path
+            value: $steps.add-new-contact.outputs.id
+        requestBody:
+          contentType: application/json
+          payload:
+            contact_id: $steps.add-new-contact.outputs.id
+            email: $inputs.email
+            name: $inputs.name
+            phone: $inputs.phone
+            title: $inputs.title
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          id: $response.body#/data/id
+      - stepId: list-contact-persons
+        description: Lists all contact persons associated with a specific business
+          contact, providing an overview of key individuals.
+        operationId: getContactPersonsList
+        parameters:
+          - name: contact_id
+            in: path
+            value: $steps.add-new-contact.outputs.id
+          - name: q
+            in: query
+            value: $inputs.q
+          - name: created_gte
+            in: query
+            value: $inputs.created_gte
+          - name: created_lte
+            in: query
+            value: $inputs.created_lte
+        successCriteria:
+          - condition: $statusCode == 200
+        outputs:
+          data: $response.body#/data
+    outputs:
+      data: $steps.list-contact-persons.outputs.data
+      id: $steps.add-contact-person.outputs.id
+    failureActions:
+      - reference: $components.failureActions.auth_failure
+      - reference: $components.failureActions.permission_denied
+      - reference: $components.failureActions.not_found
+      - reference: $components.failureActions.server_error
+components:
+  successActions:
+    default_success:
+      name: default_success
+      type: end
+  failureActions:
+    auth_failure:
+      name: auth_failure
+      type: end
+      criteria:
+        - condition: $statusCode == 401
+    permission_denied:
+      name: permission_denied
+      type: end
+      criteria:
+        - condition: $statusCode == 403
+    not_found:
+      name: not_found
+      type: end
+      criteria:
+        - condition: $statusCode == 404
+    server_error:
+      name: server_error
+      type: retry
+      retryAfter: 2
+      retryLimit: 3
+      criteria:
+        - condition: $statusCode >= 500
+    default_retry:
+      name: default_retry
+      type: retry
+      retryAfter: 1
+      retryLimit: 3
+    default_failure:
+      name: default_failure
+      type: end
