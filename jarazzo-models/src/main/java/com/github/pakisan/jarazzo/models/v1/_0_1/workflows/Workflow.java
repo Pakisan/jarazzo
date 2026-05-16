@@ -2,7 +2,11 @@ package com.github.pakisan.jarazzo.models.v1._0_1.workflows;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.github.pakisan.jarazzo.core.ExtendableObject;
+import com.github.pakisan.jarazzo.core.jackson.FailureActionsDeserializer;
+import com.github.pakisan.jarazzo.core.jackson.ParameterDeserializer;
+import com.github.pakisan.jarazzo.core.jackson.SuccessActionsDeserializer;
 import com.github.pakisan.jarazzo.models.v1._0_1.workflows.steps.Step;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -121,6 +125,7 @@ public class Workflow extends ExtendableObject {
      */
     @Nullable
     @JsonProperty(value = "successActions")
+    @JsonDeserialize(contentUsing = SuccessActionsDeserializer.class)
     @JsonPropertyDescription("A list of success actions that are applicable for all steps described under this workflow")
     private List<@NonNull Object> successActions;
 
@@ -138,6 +143,7 @@ public class Workflow extends ExtendableObject {
      */
     @Nullable
     @JsonProperty(value = "failureActions")
+    @JsonDeserialize(contentUsing = FailureActionsDeserializer.class)
     @JsonPropertyDescription("A list of failure actions that are applicable for all steps described under this workflow")
     private List<@NonNull Object> failureActions;
 
@@ -170,6 +176,7 @@ public class Workflow extends ExtendableObject {
      */
     @Nullable
     @JsonProperty(value = "parameters")
+    @JsonDeserialize(contentUsing = ParameterDeserializer.class)
     @JsonPropertyDescription("A list of parameters that are applicable for all steps described under this workflow")
     private List<@NonNull Object> parameters;
 

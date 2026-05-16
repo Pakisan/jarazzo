@@ -2,7 +2,11 @@ package com.github.pakisan.jarazzo.models.v1._0_1.workflows.steps;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.github.pakisan.jarazzo.core.ExtendableObject;
+import com.github.pakisan.jarazzo.core.jackson.FailureActionsDeserializer;
+import com.github.pakisan.jarazzo.core.jackson.ParameterDeserializer;
+import com.github.pakisan.jarazzo.core.jackson.SuccessActionsDeserializer;
 import com.github.pakisan.jarazzo.models.v1._0_1.actions.conditions.Criterion;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -119,9 +123,13 @@ public class Step extends ExtendableObject {
    * If a Reusable Object is provided, it <b>MUST</b> link to a parameter defined in the <code>components/parameters</code> of the current Arazzo document
    * <br><br>
    * The list <b>MUST NOT</b> include duplicate parameters
+   *
+   * @see <a href="https://spec.openapis.org/arazzo/latest.html#reusable-object">Reusable Object</a>
+   * @see <a href="https://spec.openapis.org/arazzo/latest.html#parameter-object">Parameter Object</a>
    */
   @Nullable
   @JsonProperty(value = "parameters")
+  @JsonDeserialize(contentUsing = ParameterDeserializer.class)
   @JsonPropertyDescription("A list of parameters that MUST be passed to an operation or workflow as referenced by operationId, operationPath, or workflowId")
   private List<@NonNull Object> parameters;
 
@@ -172,6 +180,7 @@ public class Step extends ExtendableObject {
    */
   @Nullable
   @JsonProperty(value = "onSuccess")
+  @JsonDeserialize(contentUsing = SuccessActionsDeserializer.class)
   @JsonPropertyDescription("An array of success action objects that specify what to do upon step success")
   private List<@NonNull Object> onSuccess;
 
@@ -193,6 +202,7 @@ public class Step extends ExtendableObject {
    */
   @Nullable
   @JsonProperty(value = "onFailure")
+  @JsonDeserialize(contentUsing = FailureActionsDeserializer.class)
   @JsonPropertyDescription("An array of failure action objects that specify what to do upon step failure")
   private List<@NonNull Object> onFailure;
 
